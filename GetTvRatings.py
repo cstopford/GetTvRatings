@@ -28,7 +28,8 @@ print(stitle)
 
 # Get ratings:
 ratings = []  
-votes = []    
+votes = []
+seasonNumber = []
 
 for i in range(1, int(nseasonsStr)+1):
 
@@ -46,19 +47,54 @@ for i in range(1, int(nseasonsStr)+1):
             valString = section.text.lstrip()
             ratings.append(float(valString[:valString.find('\n')]))
             vote = valString[valString.find('(') + 1 : valString.find(')')].replace(',','')
-            votes.append(float(vote))    
+            votes.append(float(vote))
+            seasonNumber.append(i)
         
-# Plot output        
-x = range(0,len(ratings))
+# Plot output using matplotlib
+x = list(range(0,len(ratings)))
 f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 ax1.scatter(x, ratings)
 ax1.set_title(stitle)
 ax1.set_ylim(0, 10)
 ax1.grid()
+ax1.set_ylabel('Rating')
+
 ax2.scatter(x, votes)
 ax2.set_ylim(0, max(votes)*1.2)
 ax2.grid()
 ax2.set_xlabel('Episode #')
+ax2.set_ylabel('# views')
 plt.savefig(imdbID + '.png')
 plt.show()
 
+# Plot using something else...
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+app = dash.Dash()
+app.layout = html.Div(children=[
+    html.H1(children='TV Ratings'),
+
+    html.Div(children='''
+        Get TV Ratings: see how a show fares over time
+    '''),
+
+    dcc.Graph(
+        id='ratings-graph',
+        figure={
+            'data': [
+                {'x': x, 'y': ratings, 'type': 'scatter', 'name': 'Ratings', 'mode': 'markers'},
+                {'x': x, 'y': votes, 'type': 'scatter', 'name': 'Votes', 'mode': 'line', 'yaxis': 'y2'},
+            ],
+            'layout': {
+                'title': 'TV Data Visualisation',
+                'yaxis1': {'title': 'Ratings', 'range': [0, 10]},
+                'yaxis2': {'title': '# votes', 'overlaying': 'y', 'side': 'right'}
+            }
+        }
+    )
+
+])
+
+if __name__ == '__main__':
+    app.run_server(debug=False)
